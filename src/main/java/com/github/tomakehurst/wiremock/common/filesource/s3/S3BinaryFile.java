@@ -21,7 +21,13 @@ import com.github.tomakehurst.wiremock.common.BinaryFile;
 import java.io.InputStream;
 import java.net.URI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class S3BinaryFile extends BinaryFile {
+
+  private static final Logger log = LoggerFactory.getLogger(S3FileSource.class);
+
   private final AmazonS3 s3;
 
   public S3BinaryFile(AmazonS3 s3, URI uri) {
@@ -33,6 +39,7 @@ public class S3BinaryFile extends BinaryFile {
   @Override
   public InputStream getStream() {
     URI uri = getUri();
+    log.info("Opening file {}", uri);
     S3Object obj = s3.getObject(uri.getHost(), uri.getPath());
     return obj.getObjectContent();
   }
