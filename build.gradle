@@ -65,6 +65,7 @@ dependencies {
   }
   api "org.ow2.asm:asm:9.2"
   api "org.slf4j:slf4j-api:1.7.33"
+  implementation 'ch.qos.logback:logback-classic:1.2.10'
   api "net.sf.jopt-simple:jopt-simple:5.0.4"
 
   compileOnly("junit:junit:4.13.2") {
