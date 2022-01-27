@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Thomas Akehurst
+ * Copyright (C) 2011-2022 Thomas Akehurst
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import static com.github.tomakehurst.wiremock.extension.ExtensionLoader.valueAss
 import static com.github.tomakehurst.wiremock.http.CaseInsensitiveKey.TO_CASE_INSENSITIVE_KEYS;
 
 import com.github.tomakehurst.wiremock.common.*;
+import com.github.tomakehurst.wiremock.common.filesource.s3.S3FileSource;
 import com.github.tomakehurst.wiremock.common.ssl.KeyStoreSettings;
 import com.github.tomakehurst.wiremock.common.ssl.KeyStoreSourceFactory;
 import com.github.tomakehurst.wiremock.core.MappingsSaver;
@@ -118,6 +119,9 @@ public class CommandLineOptions implements Options {
       "disable-optimize-xml-factories-loading";
   private static final String DISABLE_STRICT_HTTP_HEADERS = "disable-strict-http-headers";
   private static final String LOAD_RESOURCES_FROM_CLASSPATH = "load-resources-from-classpath";
+  private static final String LOAD_RESOURCES_FROM_S3 = "load-resources-from-s3";
+  private static final String S3_RESOURCES_BUCKET = "resources-s3-bucket";
+  private static final String S3_RESOURCES_PREFIX = "resources-s3-prefix";
 
   private final OptionSet optionSet;
   private final FileSource fileSource;
@@ -336,6 +340,33 @@ public class CommandLineOptions implements Options {
                 + WireMockApp.FILES_ROOT
                 + " folders)")
         .withRequiredArg();
+    optionParser
+        .accepts(
+            LOAD_RESOURCES_FROM_S3,
+            "Specifies path on in S3 for storing recordings (parent for "
+                + MAPPINGS_ROOT
+                + " and "
+                + WireMockApp.FILES_ROOT
+                + " folders)")
+        .withRequiredArg();
+    optionParser
+        .accepts(
+            S3_RESOURCES_BUCKET,
+            "Specifies bucket for storing recordings (parent for "
+                + MAPPINGS_ROOT
+                + " and "
+                + WireMockApp.FILES_ROOT
+                + " folders)")
+        .withRequiredArg();
+    optionParser
+        .accepts(
+            S3_RESOURCES_PREFIX,
+            "Specifies bucket prefix for storing recordings (parent for "
+                + MAPPINGS_ROOT
+                + " and "
+                + WireMockApp.FILES_ROOT
+                + " folders)")
+        .withRequiredArg();
 
     optionParser.accepts(HELP, "Print this message").forHelp();
 
@@ -346,6 +377,10 @@ public class CommandLineOptions implements Options {
     if (optionSet.has(LOAD_RESOURCES_FROM_CLASSPATH)) {
       fileSource =
           new ClasspathFileSource((String) optionSet.valueOf(LOAD_RESOURCES_FROM_CLASSPATH));
+    } else if (optionSet.has(LOAD_RESOURCES_FROM_S3)) {
+      String bucket = (String) optionSet.valueOf(S3_RESOURCES_BUCKET);
+      String prefix = (String) optionSet.valueOf(S3_RESOURCES_PREFIX);
+      fileSource = new S3FileSource(bucket, prefix);
     } else {
       fileSource = new SingleRootFileSource((String) optionSet.valueOf(ROOT_DIR));
     }

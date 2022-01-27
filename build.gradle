@@ -86,6 +86,9 @@ dependencies {
   }
   api "commons-io:commons-io:2.11.0"
 
+  implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.1000')
+  implementation 'com.amazonaws:aws-java-sdk-s3'
+
   testImplementation "junit:junit:4.13"
   testImplementation("org.junit.jupiter:junit-jupiter:$versions.junitJupiter")
   testImplementation("org.junit.platform:junit-platform-testkit")
