@@ -37,9 +37,9 @@ public class S3FileSource implements FileSource {
   private final AmazonS3 s3;
   private final URI root;
 
-  public S3FileSource(String bucket, String prefix) {
+  public S3FileSource(URI root) {
     s3 = AmazonS3ClientBuilder.standard().build();
-    root = uriFromBucketKey(bucket, prefix);
+    this.root = root;
   }
 
   public S3FileSource(AmazonS3 s3, URI root) {

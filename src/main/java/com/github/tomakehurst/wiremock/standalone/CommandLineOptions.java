@@ -343,29 +343,11 @@ public class CommandLineOptions implements Options {
     optionParser
         .accepts(
             LOAD_RESOURCES_FROM_S3,
-            "Specifies path on in S3 for storing recordings (parent for "
+            "Specifies path in S3 for storing recordings (parent for "
                 + MAPPINGS_ROOT
                 + " and "
                 + WireMockApp.FILES_ROOT
-                + " folders)")
-        .withRequiredArg();
-    optionParser
-        .accepts(
-            S3_RESOURCES_BUCKET,
-            "Specifies bucket for storing recordings (parent for "
-                + MAPPINGS_ROOT
-                + " and "
-                + WireMockApp.FILES_ROOT
-                + " folders)")
-        .withRequiredArg();
-    optionParser
-        .accepts(
-            S3_RESOURCES_PREFIX,
-            "Specifies bucket prefix for storing recordings (parent for "
-                + MAPPINGS_ROOT
-                + " and "
-                + WireMockApp.FILES_ROOT
-                + " folders)")
+                + " folders, eg. s3://my-buckey/my-prefix)")
         .withRequiredArg();
 
     optionParser.accepts(HELP, "Print this message").forHelp();
@@ -378,9 +360,8 @@ public class CommandLineOptions implements Options {
       fileSource =
           new ClasspathFileSource((String) optionSet.valueOf(LOAD_RESOURCES_FROM_CLASSPATH));
     } else if (optionSet.has(LOAD_RESOURCES_FROM_S3)) {
-      String bucket = (String) optionSet.valueOf(S3_RESOURCES_BUCKET);
-      String prefix = (String) optionSet.valueOf(S3_RESOURCES_PREFIX);
-      fileSource = new S3FileSource(bucket, prefix);
+      URI uri = URI.create((String) optionSet.valueOf(LOAD_RESOURCES_FROM_S3));
+      fileSource = new S3FileSource(uri);
     } else {
       fileSource = new SingleRootFileSource((String) optionSet.valueOf(ROOT_DIR));
     }
