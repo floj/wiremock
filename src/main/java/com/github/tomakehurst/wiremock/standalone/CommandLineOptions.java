@@ -120,8 +120,6 @@ public class CommandLineOptions implements Options {
   private static final String DISABLE_STRICT_HTTP_HEADERS = "disable-strict-http-headers";
   private static final String LOAD_RESOURCES_FROM_CLASSPATH = "load-resources-from-classpath";
   private static final String LOAD_RESOURCES_FROM_S3 = "load-resources-from-s3";
-  private static final String S3_RESOURCES_BUCKET = "resources-s3-bucket";
-  private static final String S3_RESOURCES_PREFIX = "resources-s3-prefix";
 
   private final OptionSet optionSet;
   private final FileSource fileSource;
