@@ -38,9 +38,10 @@ public class S3TextFile extends TextFile {
   @SuppressWarnings("resource")
   @Override
   public InputStream getStream() {
-    URI uri = getUri();
-    log.info("Opening file {}", uri);
-    S3Object obj = s3.getObject(uri.getHost(), uri.getPath());
+    BucketAndKey bk = BucketAndKey.from(getUri());
+    log.info("Opening file {}", bk);
+
+    S3Object obj = s3.getObject(bk.getBucket(), bk.getKey());
     return obj.getObjectContent();
   }
 

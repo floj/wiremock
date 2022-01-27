@@ -23,6 +23,8 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.github.tomakehurst.wiremock.common.BinaryFile;
 import com.github.tomakehurst.wiremock.common.FileSource;
 import com.github.tomakehurst.wiremock.common.TextFile;
+import com.github.tomakehurst.wiremock.core.WireMockApp;
+
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.util.ArrayList;
@@ -55,7 +57,17 @@ public class S3FileSource implements FileSource {
   private static URI build(URI root, String key) {
     key = StringUtils.removeStart(key, "/");
     key = StringUtils.removeEnd(key, "/");
-    return URI.create(root.toString() + "/" + key);
+
+    String base = StringUtils.removeStart(root.toString(), "/");
+    base = StringUtils.removeEnd(base, "/");
+
+    return URI.create(base + "/" + key);
+  }
+
+  private static URI uriFromBucketKey(String bucketName, String key) {
+    key = StringUtils.removeStart(key, "/");
+    key = StringUtils.removeEnd(key, "/");
+    return URI.create("s3://" + bucketName + "/" + key);
   }
 
   @Override
@@ -91,14 +103,15 @@ public class S3FileSource implements FileSource {
   @Override
   public List<TextFile> listFilesRecursively() {
     List<TextFile> list = new ArrayList<>();
-    URI uri = getUri();
+    BucketAndKey bk = BucketAndKey.from(getUri());
+
     ListObjectsV2Request req = new ListObjectsV2Request();
-    req.setBucketName(uri.getHost());
-    req.setPrefix(uri.getPath());
+    req.setBucketName(bk.getBucket());
+    req.setPrefix(bk.getKey());
     req.setMaxKeys(1000);
     // prevent endless loop my restricting to 100 pages (=100000 files)
     for (int i = 0; i < 100; i++) {
-      log.info("Listing files (page {}) in {}", i, uri);
+      log.info("Listing files (page {}) in {}", i, bk);
       ListObjectsV2Result result = s3.listObjectsV2(req);
       for (S3ObjectSummary os : result.getObjectSummaries()) {
         URI objUri = uriFromBucketKey(os.getBucketName(), os.getKey());
@@ -109,41 +122,45 @@ public class S3FileSource implements FileSource {
       }
       req.setContinuationToken(result.getNextContinuationToken());
     }
-
+    log.info("Found {} files in {}", list.size(), bk);
     return list;
-  }
-
-  private static URI uriFromBucketKey(String bucketName, String key) {
-    key = StringUtils.removeStart(key, "/");
-    key = StringUtils.removeEnd(key, "/");
-    return URI.create("s3://" + bucketName + "/" + key);
   }
 
   @Override
   public void writeTextFile(String name, String contents) {
-    URI uri = build(root, name);
-    log.info("Writing text file {}", uri);
-    s3.putObject(uri.getHost(), uri.getPath(), contents);
+    BucketAndKey bk = BucketAndKey.from(build(root, name));
+
+    log.info("Writing text file {}", bk);
+    s3.putObject(bk.getBucket(), bk.getKey(), contents);
   }
 
   @Override
   public void writeBinaryFile(String name, byte[] contents) {
-    URI uri = build(root, name);
-    log.info("Writing binary file {}", uri);
-    s3.putObject(uri.getHost(), uri.getPath(), new ByteArrayInputStream(contents), null);
+    BucketAndKey bk = BucketAndKey.from(build(root, name));
+
+    log.info("Writing binary file {}", bk);
+    s3.putObject(bk.getBucket(), bk.getKey(), new ByteArrayInputStream(contents), null);
   }
 
   @Override
   public boolean exists() {
-    URI uri = getUri();
-    log.info("Checking if {} exists", uri);
-    return s3.doesObjectExist(uri.getHost(), uri.getPath());
+    BucketAndKey bk = BucketAndKey.from(getUri());
+
+    log.info("Checking if {} exists", bk);
+    String uri = getUri().toString();
+
+    if (uri.endsWith("/" + WireMockApp.MAPPINGS_ROOT)
+        || uri.endsWith("/" + WireMockApp.FILES_ROOT)) {
+      return true;
+    }
+    return s3.doesObjectExist(bk.getBucket(), bk.getKey());
   }
 
   @Override
   public void deleteFile(String name) {
-    URI uri = getUri();
-    log.info("Deleting {}", uri);
-    s3.deleteObject(uri.getHost(), uri.getPath());
+    BucketAndKey bk = BucketAndKey.from(getUri());
+
+    log.info("Deleting {}", bk);
+    s3.deleteObject(bk.getBucket(), bk.getKey());
   }
 }
